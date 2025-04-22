@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Student Enrollment Form</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <!-- Bootstrap -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+        <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    </head>
+    <body>
+        <div class="container mt-5">
+            <h2 class="mb-4">Student Enrollment Form</h2>
+            <form id="studentForm">
+                <div class="mb-3">
+                    <label for="rollNo" class="form-label">Roll No. (Primary Key)</label>
+                    <input type="text" class="form-control" id="rollNo" placeholder="Enter Roll Number" onblur="checkRollNo()" required>
+                </div>
+                <div class="mb-3">
+                    <label for="fullName" class="form-label">Full Name</label>
+                    <input type="text" class="form-control" id="fullName" disabled required>
+                </div>
+                <div class="mb-3">
+                    <label for="class" class="form-label">Class</label>
+                    <input type="text" class="form-control" id="class" disabled required>
+                </div>
+                <div class="mb-3">
+                    <label for="birthDate" class="form-label">Birth Date</label>
+                    <input type="date" class="form-control" id="birthDate" disabled required>
+                </div>
+                <div class="mb-3">
+                    <label for="address" class="form-label">Address</label>
+                    <input type="text" class="form-control" id="address" disabled required>
+                </div>
+                <div class="mb-3">
+                    <label for="enrollmentDate" class="form-label">Enrollment Date</label>
+                    <input type="date" class="form-control" id="enrollmentDate" disabled required>
+                </div>
+
+                <button type="button" id="saveBtn" class="btn btn-success me-2" onclick="saveData()" disabled>Save</button>
+                <button type="button" id="updateBtn" class="btn btn-warning me-2" onclick="updateData()" disabled>Update</button>
+                <button type="button" class="btn btn-danger" onclick="resetForm()">Reset</button>
+            </form>
+        </div>
+
+        <script>
+            const dbName = "Student";
+            const relName = "Student-Rel";
+            const token = "90936861|-31948784479254024|90932362";
+            const apiBase = "http://api.login2explore.com:5577";
+            let currentRecNo = null;
+
+            function setFieldState(enable) {
+                $("#fullName, #class, #birthDate, #address, #enrollmentDate").prop("disabled", !enable);
+            }
+
+            function resetForm() {
+                $("#studentForm")[0].reset();
+                $("#rollNo").prop("disabled", false);
+                setFieldState(false);
+                $("#saveBtn, #updateBtn").prop("disabled", true);
+                currentRecNo = null;
+                $("#rollNo").focus();
+            }
+
+            function getFormData() {
+                let data = {
+                    RollNo: $("#rollNo").val().trim(),
+                    FullName: $("#fullName").val().trim(),
+                    Class: $("#class").val().trim(),
+                    BirthDate: $("#birthDate").val(),
+                    Address: $("#address").val().trim(),
+                    EnrollmentDate: $("#enrollmentDate").val()
+                };
+
+                for (let key in data) {
+                    if (!data[key]) {
+                        alert(`${key} is required`);
+                        return null;
+                    }
+                }
+                return data;
+            }
+
+            function checkRollNo() {
+                let rollNo = $("#rollNo").val().trim();
+                if (!rollNo)
+                    return;
+
+                let req = {
+                    token,
+                    cmd: "GET_BY_KEY",
+                    dbName,
+                    rel: relName,
+                    jsonStr: JSON.stringify({RollNo: rollNo})
+                };
+
+                $.post(`${apiBase}/api/irl`, JSON.stringify(req), function (res) {
+                    if (res.data) {
+                        // Record exists
+                        currentRecNo = res.data.rec_no;
+                        let record = res.data.record;
+                        $("#fullName").val(record.FullName);
+                        $("#class").val(record.Class);
+                        $("#birthDate").val(record.BirthDate);
+                        $("#address").val(record.Address);
+                        $("#enrollmentDate").val(record.EnrollmentDate);
+
+                        setFieldState(true);
+                        $("#rollNo").prop("disabled", true);
+                        $("#saveBtn").prop("disabled", true);
+                        $("#updateBtn").prop("disabled", false);
+                    } else {
+                        // New entry
+                        setFieldState(true);
+                        $("#rollNo").prop("disabled", true);
+                        $("#saveBtn").prop("disabled", false);
+                        $("#updateBtn").prop("disabled", true);
+                    }
+                }).fail(() => {
+                    alert("Error checking Roll No.");
+                });
+            }
+
+            function saveData() {
+                let data = getFormData();
+                if (!data)
+                    return;
+
+                let req = {
+                    token,
+                    cmd: "PUT",
+                    dbName,
+                    rel: relName,
+                    jsonStr: JSON.stringify(data)
+                };
+
+                $.post(`${apiBase}/api/iml`, JSON.stringify(req), function () {
+                    alert("Data saved successfully!");
+                    resetForm();
+                }).fail(() => {
+                    alert("Failed to save data.");
+                });
+            }
+
+            function updateData() {
+                if (!currentRecNo) {
+                    alert("No record to update.");
+                    return;
+                }
+
+                let data = getFormData();
+                if (!data)
+                    return;
+
+                let req = {
+                    token,
+                    cmd: "UPDATE",
+                    dbName,
+                    rel: relName,
+                    rec_no: currentRecNo,
+                    jsonStr: JSON.stringify(data)
+                };
+
+                $.post(`${apiBase}/api/iml`, JSON.stringify(req), function () {
+                    alert("Data updated successfully!");
+                    resetForm();
+                }).fail(() => {
+                    alert("Failed to update data.");
+                });
+            }
+        </script>
+    </body>
+</html>
