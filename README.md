@@ -34,7 +34,7 @@ The project complies with specified micro project requirements including primary
 
 Here are screenshots of the application:
 
-![Form Screenshot](https://via.placeholder.com/800x400?text=Form+Interface)
+![Form Screenshot]([https://via.placeholder.com/800x400?text=Form+Interface](https://github.com/baba7371/student-enrollment-system/blob/main/Screenshot%202025-04-22%20181338.png))
 *Form UI with Bootstrap styling and button controls*
 
 
